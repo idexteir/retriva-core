@@ -68,14 +68,12 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Properties</Text>
-        <TouchableOpacity
-          style={styles.manageBtn}
-          onPress={() => navigation.navigate('ManageProperties')}
-        >
-          <Text style={styles.manageBtnText}>Manage</Text>
-        </TouchableOpacity>
+      {/* Search Bar / Header */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <Text style={styles.searchPlaceholder}>Search properties...</Text>
+        </View>
       </View>
 
       {/* Category Filter Chips */}
@@ -149,27 +147,27 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#111827' },
-  manageBtn: { backgroundColor: '#2563eb', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  manageBtnText: { color: '#fff', fontWeight: '600' },
-  filterSection: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#f9fafb', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  filterTitle: { fontSize: 12, fontWeight: '600', color: '#6b7280', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  container: { flex: 1, backgroundColor: '#f8fafc' },
+  searchContainer: { backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f5f9', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
+  searchIcon: { fontSize: 18, opacity: 0.5 },
+  searchPlaceholder: { fontSize: 16, color: '#94a3b8' },
+  filterSection: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  filterTitle: { fontSize: 11, fontWeight: '700', color: '#64748b', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
   filterScroll: { flexDirection: 'row' },
-  filterChip: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginRight: 8, borderWidth: 1, borderColor: '#d1d5db' },
+  filterChip: { backgroundColor: '#f8fafc', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 24, marginRight: 10, borderWidth: 2, borderColor: 'transparent' },
   filterChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
-  filterChipText: { fontSize: 14, color: '#374151', fontWeight: '500' },
-  filterChipTextActive: { color: '#fff' },
-  resultsCount: { paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#fff' },
-  resultsCountText: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
+  filterChipText: { fontSize: 14, color: '#475569', fontWeight: '600' },
+  filterChipTextActive: { color: '#fff', fontWeight: '700' },
+  resultsCount: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff' },
+  resultsCountText: { fontSize: 13, color: '#64748b', fontWeight: '600' },
   list: { padding: 16 },
-  card: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3, overflow: 'hidden' },
-  imageContainer: { width: '100%', height: 200, overflow: 'hidden', backgroundColor: '#f3f4f6' },
+  card: { backgroundColor: '#fff', borderRadius: 16, marginBottom: 20, shadowColor: '#1e293b', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5, overflow: 'hidden' },
+  imageContainer: { width: '100%', height: 220, overflow: 'hidden', backgroundColor: '#f1f5f9' },
   image: { width: '100%', height: '100%' },
-  content: { padding: 16 },
-  title: { fontSize: 20, fontWeight: '600', marginBottom: 4, color: '#111827' },
-  description: { fontSize: 14, color: '#6b7280', marginBottom: 8 },
-  meta: { fontSize: 12, color: '#9ca3af', marginBottom: 4 },
-  price: { fontSize: 18, fontWeight: 'bold', color: '#2563eb' },
+  content: { padding: 20 },
+  title: { fontSize: 22, fontWeight: '700', marginBottom: 8, color: '#0f172a', letterSpacing: -0.5 },
+  description: { fontSize: 15, color: '#64748b', marginBottom: 12, lineHeight: 22 },
+  meta: { fontSize: 13, color: '#94a3b8', marginBottom: 12, fontWeight: '500' },
+  price: { fontSize: 24, fontWeight: '800', color: '#2563eb', letterSpacing: -0.5 },
 });

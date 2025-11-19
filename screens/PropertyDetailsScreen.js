@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Dimensions, Modal, Alert, ActivityIndicator } from 'react-native';
+import { Video } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { getPropertyById } from '../api/properties';
@@ -36,17 +37,26 @@ export default function PropertyDetailsScreen({ route, navigation }) {
         return;
       }
 
-      const filename = selectedImageUri.split('/').pop();
-      const fileUri = FileSystem.documentDirectory + filename;
+      Alert.alert('Saving', 'Please wait...');
 
-      const { uri } = await FileSystem.downloadAsync(selectedImageUri, fileUri);
-      const asset = await MediaLibrary.createAssetAsync(uri);
-      await MediaLibrary.createAlbumAsync('Retriva', asset, false);
+      // If it's a local file, copy it directly to gallery
+      if (selectedImageUri.startsWith('file://')) {
+        const asset = await MediaLibrary.createAssetAsync(selectedImageUri);
+        await MediaLibrary.createAlbumAsync('Retriva', asset, false);
+        Alert.alert('Success', 'Image saved to gallery!');
+      } else {
+        // If it's a remote URL, download it first
+        const filename = selectedImageUri.split('/').pop() || `image_${Date.now()}.jpg`;
+        const fileUri = FileSystem.documentDirectory + filename;
 
-      Alert.alert('Success', 'Image saved to gallery!');
+        const { uri } = await FileSystem.downloadAsync(selectedImageUri, fileUri);
+        const asset = await MediaLibrary.createAssetAsync(uri);
+        await MediaLibrary.createAlbumAsync('Retriva', asset, false);
+        Alert.alert('Success', 'Image saved to gallery!');
+      }
     } catch (error) {
       console.error('Download error:', error);
-      Alert.alert('Error', 'Failed to download image');
+      Alert.alert('Error', 'Failed to save image');
     }
   };
 
@@ -59,7 +69,9 @@ export default function PropertyDetailsScreen({ route, navigation }) {
     );
   }
 
-  const images = property.images && property.images.length > 0 ? property.images : ['https://via.placeholder.com/800x600'];
+  const images = property.images && property.images.length > 0 ? property.images : [];
+  const videos = property.videos || [];
+  const allMedia = [...images, ...videos]; // Combine images and videos
   const displayPrice = property.price && Number(property.price) > 0 
     ? `SAR ${Number(property.price).toLocaleString()}` 
     : 'Call for Price';
@@ -67,31 +79,54 @@ export default function PropertyDetailsScreen({ route, navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        {/* Image Gallery */}
-        <View style={styles.gallery}>
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={(e) => {
-              const index = Math.round(e.nativeEvent.contentOffset.x / width);
-              setCurrentImageIndex(index);
-            }}
-            scrollEventThrottle={16}
-          >
-            {images.map((uri, index) => (
-              <TouchableOpacity key={index} onPress={() => openImageModal(uri)} activeOpacity={0.9}>
-                <Image source={{ uri }} style={styles.galleryImage} resizeMode="cover" />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          
-          <View style={styles.pagination}>
-            {images.map((_, index) => (
-              <View key={index} style={[styles.dot, currentImageIndex === index && styles.dotActive]} />
-            ))}
+        {/* Media Gallery (Images + Videos) */}
+        {allMedia.length > 0 && (
+          <View style={styles.gallery}>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / width);
+                setCurrentImageIndex(index);
+              }}
+              scrollEventThrottle={16}
+            >
+              {allMedia.map((uri, index) => {
+                const isVideo = videos.includes(uri);
+                
+                if (isVideo) {
+                  return (
+                    <View key={index} style={{ width }}>
+                      <Video
+                        source={{ uri }}
+                        style={styles.galleryImage}
+                        useNativeControls
+                        resizeMode="cover"
+                        isLooping
+                      />
+                      <View style={styles.videoLabel}>
+                        <Text style={styles.videoLabelText}>🎥 Video</Text>
+                      </View>
+                    </View>
+                  );
+                } else {
+                  return (
+                    <TouchableOpacity key={index} onPress={() => openImageModal(uri)} activeOpacity={0.9}>
+                      <Image source={{ uri }} style={styles.galleryImage} resizeMode="cover" />
+                    </TouchableOpacity>
+                  );
+                }
+              })}
+            </ScrollView>
+            
+            <View style={styles.pagination}>
+              {allMedia.map((_, index) => (
+                <View key={index} style={[styles.dot, currentImageIndex === index && styles.dotActive]} />
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         <View style={styles.details}>
           <View style={styles.header}>
@@ -140,10 +175,14 @@ export default function PropertyDetailsScreen({ route, navigation }) {
             </TouchableOpacity>
           </View>
 
+          {/* Admin Actions */}
           <View style={styles.adminActions}>
             <TouchableOpacity
               style={styles.editButton}
-              onPress={() => navigation.navigate('AddEditProperty', { id: property.id })}
+              onPress={() => navigation.navigate('Manage', { 
+                screen: 'AddEditProperty', 
+                params: { id: property.id } 
+              })}
             >
               <Text style={styles.editButtonText}>{'✏️ Edit Property'}</Text>
             </TouchableOpacity>
@@ -229,4 +268,6 @@ const styles = StyleSheet.create({
   closeButtonText: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
   downloadButton: { position: 'absolute', bottom: 50, backgroundColor: '#2563eb', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 24 },
   downloadButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  videoLabel: { position: 'absolute', top: 16, left: 16, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  videoLabelText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 });

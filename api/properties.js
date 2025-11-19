@@ -21,6 +21,7 @@ export const getProperties = async (activeOnly = true) => {
     return (data || []).map(item => ({
       ...item,
       thumbnailIndex: item.thumbnail_index || 0,
+      videos: item.videos || [], // Include videos
     }));
   } catch (error) {
     console.error('❌ getProperties error:', error);
@@ -42,6 +43,7 @@ export const getPropertyById = async (id) => {
     return {
       ...data,
       thumbnailIndex: data.thumbnail_index || 0,
+      videos: data.videos || [], // Include videos
     };
   } catch (error) {
     console.error('❌ getPropertyById error:', error);

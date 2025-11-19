@@ -16,7 +16,11 @@ export default function AddEditPropertyScreen({ route, navigation }) {
   const [category, setCategory] = useState('');
   const [area, setArea] = useState('');
   const [imageUris, setImageUris] = useState([]);
+  const [videoUris, setVideoUris] = useState([]);
   const [thumbnailIndex, setThumbnailIndex] = useState(0);
+  const [uploadingImage, setUploadingImage] = useState(false); // Add upload state
+  const [uploadingVideo, setUploadingVideo] = useState(false); // Add upload state
+  const [uploadProgress, setUploadProgress] = useState(0); // Add progress state
   const [status, setStatus] = useState('active');
   const [categories, setCategories] = useState([]);
   const [areas, setAreas] = useState([]);
@@ -55,6 +59,7 @@ export default function AddEditPropertyScreen({ route, navigation }) {
           setCategory(prop.category);
           setArea(prop.area);
           setImageUris(prop.images || []);
+          setVideoUris(prop.videos || []); // Load videos
           setThumbnailIndex(prop.thumbnailIndex || 0);
           setStatus(prop.status);
         }
@@ -75,6 +80,9 @@ export default function AddEditPropertyScreen({ route, navigation }) {
       return;
     }
 
+    setUploadingImage(true);
+    setUploadProgress(0);
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: false,
@@ -82,9 +90,63 @@ export default function AddEditPropertyScreen({ route, navigation }) {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
+      // Simulate upload progress
+      for (let i = 0; i <= 100; i += 10) {
+        setUploadProgress(i);
+        await new Promise(r => setTimeout(r, 50));
+      }
+      
       const newUri = result.assets[0].uri;
       setImageUris([...imageUris, newUri]);
-      Alert.alert('Success', 'Image added! Tap "Upload Images" again to add more.');
+      setUploadProgress(100);
+      
+      setTimeout(() => {
+        setUploadingImage(false);
+        setUploadProgress(0);
+        Alert.alert('Success', 'Image added!');
+      }, 300);
+    } else {
+      setUploadingImage(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const pickVideos = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Camera roll permission is required to upload videos');
+      return;
+    }
+
+    setUploadingVideo(true);
+    setUploadProgress(0);
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      allowsEditing: false,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      // Simulate upload progress
+      for (let i = 0; i <= 100; i += 5) {
+        setUploadProgress(i);
+        await new Promise(r => setTimeout(r, 100));
+      }
+      
+      const newUri = result.assets[0].uri;
+      setVideoUris([...videoUris, newUri]);
+      setUploadProgress(100);
+      
+      setTimeout(() => {
+        setUploadingVideo(false);
+        setUploadProgress(0);
+        Alert.alert('Success', 'Video added!');
+      }, 300);
+    } else {
+      setUploadingVideo(false);
+      setUploadProgress(0);
     }
   };
 
@@ -96,13 +158,68 @@ export default function AddEditPropertyScreen({ route, navigation }) {
       return;
     }
 
+    setUploadingImage(true);
+    setUploadProgress(0);
+
     const result = await ImagePicker.launchCameraAsync({
       quality: 0.8,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
+      // Simulate upload progress
+      for (let i = 0; i <= 100; i += 10) {
+        setUploadProgress(i);
+        await new Promise(r => setTimeout(r, 50));
+      }
+      
       const newUri = result.assets[0].uri;
       setImageUris([...imageUris, newUri]);
+      setUploadProgress(100);
+      
+      setTimeout(() => {
+        setUploadingImage(false);
+        setUploadProgress(0);
+      }, 300);
+    } else {
+      setUploadingImage(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const takeVideo = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Camera permission is required to record videos');
+      return;
+    }
+
+    setUploadingVideo(true);
+    setUploadProgress(0);
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      // Simulate upload progress
+      for (let i = 0; i <= 100; i += 5) {
+        setUploadProgress(i);
+        await new Promise(r => setTimeout(r, 100));
+      }
+      
+      const newUri = result.assets[0].uri;
+      setVideoUris([...videoUris, newUri]);
+      setUploadProgress(100);
+      
+      setTimeout(() => {
+        setUploadingVideo(false);
+        setUploadProgress(0);
+      }, 300);
+    } else {
+      setUploadingVideo(false);
+      setUploadProgress(0);
     }
   };
 
@@ -118,12 +235,24 @@ export default function AddEditPropertyScreen({ route, navigation }) {
     );
   };
 
-  const selectThumbnail = (index) => {
-    setThumbnailIndex(index);
+  const showVideoOptions = () => {
+    Alert.alert(
+      'Add Video',
+      'Choose an option',
+      [
+        { text: 'Record Video', onPress: takeVideo },
+        { text: 'Choose from Gallery', onPress: pickVideos },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
   };
 
   const removeImage = (index) => {
     setImageUris(imageUris.filter((_, i) => i !== index));
+  };
+
+  const removeVideo = (index) => {
+    setVideoUris(videoUris.filter((_, i) => i !== index));
   };
 
   const validate = () => {
@@ -154,10 +283,11 @@ export default function AddEditPropertyScreen({ route, navigation }) {
     const data = {
       title,
       description,
-      price: isPriceEnabled && price ? parseFloat(price) : 0, // Set 0 if disabled
+      price: isPriceEnabled && price ? parseFloat(price) : 0,
       category,
       area,
       images: imageUris,
+      videos: videoUris, // Include videos
       thumbnailIndex,
       status,
     };
@@ -309,13 +439,94 @@ export default function AddEditPropertyScreen({ route, navigation }) {
           </View>
         </View>
 
+        {/* Video Upload Section */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Videos</Text>
+          
+          <TouchableOpacity 
+            style={[styles.uploadButton, uploadingVideo && styles.uploadButtonDisabled]} 
+            onPress={showVideoOptions}
+            disabled={uploadingVideo}
+          >
+            <Text style={styles.uploadButtonText}>
+              {uploadingVideo ? '⏳ Uploading...' : '🎥 Add Video'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Video Upload Progress Bar */}
+          {uploadingVideo && (
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: `${uploadProgress}%` }]} />
+              </View>
+              <Text style={styles.progressText}>{uploadProgress}%</Text>
+            </View>
+          )}
+
+          {videoUris.length > 0 && (
+            <>
+              <Text style={styles.thumbnailInstructions}>
+                {videoUris.length} video(s) added
+              </Text>
+              <View style={styles.imagePreviewContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {videoUris.map((uri, index) => (
+                    <View key={index} style={styles.imagePreview}>
+                      <View style={styles.videoPreview}>
+                        <Text style={styles.videoIcon}>🎬</Text>
+                        <Text style={styles.videoText}>Video {index + 1}</Text>
+                      </View>
+                      
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => {
+                          Alert.alert(
+                            'Remove Video',
+                            'Are you sure you want to remove this video?',
+                            [
+                              { text: 'Cancel', style: 'cancel' },
+                              { 
+                                text: 'Remove', 
+                                style: 'destructive',
+                                onPress: () => removeVideo(index)
+                              },
+                            ]
+                          );
+                        }}
+                      >
+                        <Text style={styles.removeImageText}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            </>
+          )}
+        </View>
+
         {/* Image Upload Section */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Images</Text>
           
-          <TouchableOpacity style={styles.uploadButton} onPress={showImageOptions}>
-            <Text style={styles.uploadButtonText}>📷 Add Image</Text>
+          <TouchableOpacity 
+            style={[styles.uploadButton, uploadingImage && styles.uploadButtonDisabled]} 
+            onPress={showImageOptions}
+            disabled={uploadingImage}
+          >
+            <Text style={styles.uploadButtonText}>
+              {uploadingImage ? '⏳ Uploading...' : '📷 Add Image'}
+            </Text>
           </TouchableOpacity>
+
+          {/* Image Upload Progress Bar */}
+          {uploadingImage && (
+            <View style={styles.progressContainer}>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: `${uploadProgress}%` }]} />
+              </View>
+              <Text style={styles.progressText}>{uploadProgress}%</Text>
+            </View>
+          )}
 
           {imageUris.length > 0 && (
             <>
@@ -429,7 +640,12 @@ const styles = StyleSheet.create({
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   hint: { fontSize: 12, color: '#6b7280', marginTop: 8 },
   uploadButton: { backgroundColor: '#2563eb', padding: 16, borderRadius: 8, alignItems: 'center' },
+  uploadButtonDisabled: { backgroundColor: '#94a3b8', opacity: 0.6 },
   uploadButtonText: { fontSize: 16, color: '#fff', fontWeight: '600' },
+  progressContainer: { marginTop: 12, gap: 8 },
+  progressBar: { height: 8, backgroundColor: '#e5e7eb', borderRadius: 4, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: '#2563eb', borderRadius: 4 },
+  progressText: { fontSize: 12, color: '#64748b', textAlign: 'center', fontWeight: '600' },
   imagePreviewContainer: { marginTop: 12 },
   imagePreview: { position: 'relative', width: 120, height: 120, marginRight: 12 },
   previewImage: { width: '100%', height: '100%', borderRadius: 8 },
@@ -445,4 +661,7 @@ const styles = StyleSheet.create({
   cancelButton: { backgroundColor: '#f3f4f6', padding: 16, borderRadius: 12, alignItems: 'center' },
   cancelButtonText: { color: '#374151', fontSize: 16, fontWeight: '600' },
   thumbnailInstructions: { fontSize: 13, color: '#2563eb', marginTop: 8, marginBottom: 4, fontWeight: '500' },
+  videoPreview: { width: 120, height: 120, backgroundColor: '#1e293b', borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+  videoIcon: { fontSize: 40, marginBottom: 8 },
+  videoText: { color: '#fff', fontSize: 12, fontWeight: '600' },
 });

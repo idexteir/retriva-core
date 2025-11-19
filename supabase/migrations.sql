@@ -66,3 +66,10 @@ ADD COLUMN IF NOT EXISTS thumbnail_index INTEGER DEFAULT 0;
 
 -- Add comment
 COMMENT ON COLUMN properties.thumbnail_index IS 'Index of the image to use as thumbnail (0-based)';
+
+-- Add videos column to properties table
+ALTER TABLE properties 
+ADD COLUMN IF NOT EXISTS videos TEXT[] DEFAULT '{}';
+
+-- Add comment
+COMMENT ON COLUMN properties.videos IS 'Array of video URIs for the property';
